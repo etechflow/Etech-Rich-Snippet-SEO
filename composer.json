@@ -1,0 +1,12 @@
+{
+    "name": "etechflow/module-rich-snippets",
+    "description": "Hyva-native rich snippets (schema.org JSON-LD) for Keystation/Lockstation.",
+    "type": "magento2-module",
+    "license": "proprietary",
+    "version": "1.0.0",
+    "require": { "php": ">=8.1" },
+    "autoload": {
+        "files": ["registration.php"],
+        "psr-4": { "Etechflow\\RichSnippets\\": "" }
+    }
+}

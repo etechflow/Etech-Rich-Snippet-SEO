@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <etechflow_richsnippets>
+            <general><enabled>0</enabled></general>
+            <product><enabled>1</enabled><variants_enabled>1</variants_enabled></product>
+            <category><enabled>1</enabled></category>
+            <opengraph><enabled>1</enabled></opengraph>
+            <cms><enabled>1</enabled></cms>
+        </etechflow_richsnippets>
+    </default>
+</config>

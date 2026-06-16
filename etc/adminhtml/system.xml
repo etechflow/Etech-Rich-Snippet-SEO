@@ -8,12 +8,55 @@
             <label>Rich Snippets (JSON-LD)</label>
             <tab>etechflow</tab>
             <resource>Etechflow_RichSnippets::config</resource>
+
+            <group id="module_status" translate="label" type="text" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Module Status</label>
+                <frontend_model>Etechflow\RichSnippets\Block\Adminhtml\System\Config\ModuleStatus</frontend_model>
+            </group>
+
+            <group id="license" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>License</label>
+                <field id="license_key" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>License Key</label>
+                    <comment><![CDATA[
+                        Paste the SP-XXXX key from your purchase email, or a per-module HMAC key, or a
+                        shared eTechFlow bundle key. Bound to the domain you provided at checkout.<br/>
+                        A valid licence is always required. <code>www.</code> prefix is normalised.
+                    ]]></comment>
+                </field>
+                <field id="bundle_license_key" translate="label comment" type="obscure" sortOrder="15" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Bundle License Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <config_path>etechflow_bundle/license/license_key</config_path>
+                    <comment><![CDATA[
+                        Shared key across ALL eTechFlow modules. If you purchased the eTechFlow Bundle,
+                        paste it here once and every installed eTechFlow module activates.<br/>Stored encrypted.
+                    ]]></comment>
+                </field>
+                <field id="portal_url" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>License Portal URL</label>
+                    <comment><![CDATA[
+                        The eTechFlow portal endpoint that validates SP-XXXX subscription keys.
+                        Default: <code>https://license-service.etechflow.com/license/validate</code>.
+                        Change only if eTechFlow notifies you of a new portal URL.
+                    ]]></comment>
+                </field>
+                <field id="issued_key" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Last Issued Key (auto-managed)</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment><![CDATA[
+                        Read-only audit field. Auto-populated when the portal accepts a key for the first time.
+                        Used by the module to auto-restore the licence after a portal IP-block lift. Do not edit.
+                    ]]></comment>
+                </field>
+            </group>
+
             <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>General</label>
                 <field id="enabled" translate="label comment tooltip" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enable module (master switch)</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Master switch. While OFF, the module emits no schema.</comment>
+                    <comment>Master switch. While OFF, the module emits no schema. A valid licence is also required.</comment>
                     <tooltip>Turns the whole rich-snippets module on or off. Keep this OFF while another SEO/snippets extension (e.g. Mirasvit) is active, so you don't output duplicate structured data.</tooltip>
                 </field>
             </group>

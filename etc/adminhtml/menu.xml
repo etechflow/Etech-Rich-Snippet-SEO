@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <!-- Own group heading under Marketing so admins can find the module's
+             licence + settings (the module has no grids — storefront + config only). -->
+        <add id="Etechflow_RichSnippets::root"
+             title="Rich Snippets"
+             translate="title"
+             module="Etechflow_RichSnippets"
+             sortOrder="90"
+             parent="Magento_Backend::marketing"
+             resource="Etechflow_RichSnippets::config"/>
+        <add id="Etechflow_RichSnippets::license"
+             title="License &amp; Plans"
+             translate="title"
+             module="Etechflow_RichSnippets"
+             sortOrder="10"
+             parent="Etechflow_RichSnippets::root"
+             action="etechflow_richsnippets/license/gate"
+             resource="Etechflow_RichSnippets::config"/>
+        <add id="Etechflow_RichSnippets::config_menu"
+             title="Configuration"
+             translate="title"
+             module="Etechflow_RichSnippets"
+             sortOrder="20"
+             parent="Etechflow_RichSnippets::root"
+             action="adminhtml/system_config/edit/section/etechflow_richsnippets"
+             resource="Etechflow_RichSnippets::config"/>
+    </menu>
+</config>

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Etechflow\RichSnippets\Test\Unit\ViewModel;
 
+use Etechflow\RichSnippets\Model\LicenseValidator;
 use Etechflow\RichSnippets\ViewModel\Config;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use PHPUnit\Framework\TestCase;
@@ -15,13 +16,25 @@ class ConfigTest extends TestCase
     /**
      * @param array<string,bool> $flags
      */
-    private function makeConfig(array $flags): Config
+    private function makeConfig(array $flags, bool $licensed = true): Config
     {
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('isSetFlag')->willReturnCallback(
             static fn (string $path, $scope = null): bool => (bool)($flags[$path] ?? false)
         );
-        return new Config($scopeConfig);
+        $license = $this->createMock(LicenseValidator::class);
+        $license->method('isValid')->willReturn($licensed);
+        return new Config($scopeConfig, $license);
+    }
+
+    public function testEmitsNothingWhenUnlicensed(): void
+    {
+        $config = $this->makeConfig([
+            'etechflow_richsnippets/general/enabled' => true,
+            'etechflow_richsnippets/product/enabled' => true,
+        ], licensed: false);
+        $this->assertFalse($config->isEnabled('general'), 'general must be false when unlicensed');
+        $this->assertFalse($config->isEnabled('product'), 'area must be false when unlicensed');
     }
 
     public function testEmitsNothingWhenMasterSwitchOff(): void

@@ -2,6 +2,13 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
         <etechflow_richsnippets>
+            <license>
+                <license_key></license_key>
+                <issued_key></issued_key>
+                <issued_at>0</issued_at>
+                <ip_blocked>0</ip_blocked>
+                <portal_url>https://license-service.etechflow.com/license/validate</portal_url>
+            </license>
             <general><enabled>0</enabled></general>
             <product><enabled>1</enabled><variants_enabled>1</variants_enabled></product>
             <category><enabled>1</enabled></category>

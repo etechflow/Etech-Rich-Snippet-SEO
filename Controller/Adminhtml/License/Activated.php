@@ -16,15 +16,17 @@ use Magento\Framework\HTTP\Client\CurlFactory;
 use Magento\Framework\View\Result\PageFactory;
 
 /**
- * Landing page after payment. Two providers, two verification calls — both end
- * with the portal handing back a license key which is saved to config:
- *   Stripe : ?session_id=... -> POST /license/activate
- *   PayPal : ?token=<orderID>&method=paypal&sub_id=... -> POST /payment/paypal/capture
- * The portal verifies payment with ITS OWN keys; Magento never holds them.
+ * Landing page after payment. The buyer returns from the webstore Paddle
+ * checkout (module.etechflow.com) carrying the broker session id; we fetch the
+ * issued SP-XXXX key from the broker (only returned once Paddle confirms
+ * payment) and save it to config. Same gateway as Mega Menu.
  */
 class Activated extends Action
 {
     public const ADMIN_RESOURCE = 'Etechflow_RichSnippets::config';
+
+    private const BROKER_URL = 'https://module.etechflow.com/api/license/result';
+    private const LICENSE_TOKEN = 'lcsk_8f3b9d2a7c14e605b9af2e7c1d8043f6';
 
     public function __construct(
         Context $context,
@@ -39,29 +41,40 @@ class Activated extends Action
 
     public function execute(): ResultInterface
     {
-        $method = strtolower(trim((string) $this->getRequest()->getParam('method', '')));
-        $token  = trim((string) $this->getRequest()->getParam('token', '')); // PayPal order id
-        $isPaypal = ($method === 'paypal' || $token !== '');
-
-        $portal = rtrim(str_replace('/license/validate', '', $this->licenseValidator->getPortalUrl()), '/');
+        $sessionId = trim((string) $this->getRequest()->getParam('session_id', ''));
+        $plan      = trim((string) $this->getRequest()->getParam('plan', ''));
 
         $licenseKey = '';
-        $planName   = '';
         $error      = '';
 
-        if ($isPaypal) {
-            [$licenseKey, $planName, $error] = $this->capturePaypal($portal, $token);
+        if ($sessionId === '') {
+            $error = 'Invalid payment callback.';
         } else {
-            $sessionId = trim((string) $this->getRequest()->getParam('session_id', ''));
-            if (!$sessionId) {
-                $this->messageManager->addErrorMessage(__('Invalid payment callback.'));
-                return $this->resultFactory->create(ResultFactory::TYPE_REDIRECT)->setPath('etechflow_richsnippets/license/gate');
+            try {
+                $curl = $this->curlFactory->create();
+                $curl->setTimeout(30);
+                $curl->addHeader('Content-Type', 'application/json');
+                $curl->addHeader('Accept', 'application/json');
+                $curl->addHeader('X-ETF-License-Token', self::LICENSE_TOKEN);
+                $curl->post(self::BROKER_URL, json_encode(['session_id' => $sessionId]));
+                $status = (int) $curl->getStatus();
+                $data   = json_decode((string) $curl->getBody(), true);
+                if ($status === 200 && !empty($data['license_key'])) {
+                    $licenseKey = (string) $data['license_key'];
+                    $plan       = (string) ($data['plan'] ?? $plan);
+                } else {
+                    $error = is_array($data) && !empty($data['error']) ? $data['error'] : 'Payment not confirmed yet.';
+                }
+            } catch (\Throwable $e) {
+                $error = 'Could not reach the licensing portal: ' . $e->getMessage();
             }
-            [$licenseKey, $planName, $error] = $this->activateStripe($portal, $sessionId);
         }
 
-        if ($licenseKey) {
+        if ($licenseKey !== '') {
             $this->configWriter->save(LicenseValidator::XML_PATH_LICENSE_KEY, $licenseKey);
+            $this->configWriter->save(LicenseValidator::XML_PATH_ISSUED_KEY, $licenseKey);
+            $this->configWriter->save(LicenseValidator::XML_PATH_ISSUED_AT, (string) time());
+            $this->configWriter->save(LicenseValidator::XML_PATH_IP_BLOCKED, '0');
             $this->cache->clean([ConfigCacheType::CACHE_TAG]);
         }
 
@@ -71,87 +84,12 @@ class Activated extends Action
         $block = $page->getLayout()->getBlock('etechflow.richsnippets.license.activated');
         if ($block) {
             $block->setData('license_key', $licenseKey)
-                  ->setData('plan', $planName)
+                  ->setData('plan', $plan)
                   ->setData('error', $error)
                   ->setData('settings_url', $this->getUrl('adminhtml/system_config/edit/section/etechflow_richsnippets'))
                   ->setData('management_url', $this->getUrl('etechflow_richsnippets/license/gate'));
         }
 
         return $page;
-    }
-
-    /**
-     * @return array{0:string,1:string,2:string} [licenseKey, planName, error]
-     */
-    private function activateStripe(string $portal, string $sessionId): array
-    {
-        $subId  = trim((string) $this->getRequest()->getParam('sub_id', ''));
-        $plan   = trim((string) $this->getRequest()->getParam('plan', ''));
-        $domain = trim((string) $this->getRequest()->getParam('domain', '')) ?: $this->licenseValidator->getCurrentHost();
-        $name   = trim((string) $this->getRequest()->getParam('name', ''));
-        $email  = trim((string) $this->getRequest()->getParam('email', ''));
-
-        $payload = json_encode(array_filter([
-            'session_id' => $sessionId,
-            'sub_id'     => $subId ?: null,
-            'domain'     => $domain,
-            'name'       => $name,
-            'email'      => $email,
-            'plan'       => $plan,
-        ]));
-
-        try {
-            $curl = $this->curlFactory->create();
-            $curl->setTimeout(25);
-            $curl->addHeader('Content-Type', 'application/json');
-            $curl->addHeader('Accept', 'application/json');
-            $curl->post($portal . '/license/activate', $payload);
-            $status = (int) $curl->getStatus();
-            $body   = (string) $curl->getBody();
-            $data   = json_decode($body, true);
-
-            if ($status === 200 && !empty($data['license_key'])) {
-                return [(string) $data['license_key'], (string) ($data['plan'] ?? $plan), ''];
-            }
-            $error = is_array($data) && !empty($data['error']) ? $data['error'] : ('Portal returned status ' . $status . ': ' . $body);
-            return ['', '', $error];
-        } catch (\Throwable $e) {
-            return ['', '', 'Could not reach portal: ' . $e->getMessage()];
-        }
-    }
-
-    /**
-     * @return array{0:string,1:string,2:string} [licenseKey, planName, error]
-     */
-    private function capturePaypal(string $portal, string $token): array
-    {
-        if ($token === '') {
-            return ['', '', 'Invalid PayPal callback (missing order token).'];
-        }
-        $subId = trim((string) $this->getRequest()->getParam('sub_id', ''));
-        $plan  = trim((string) $this->getRequest()->getParam('plan', ''));
-
-        $payload = json_encode(['orderID' => $token, 'sub_id' => $subId]);
-
-        try {
-            $curl = $this->curlFactory->create();
-            $curl->setTimeout(25);
-            $curl->addHeader('Content-Type', 'application/json');
-            $curl->addHeader('Accept', 'application/json');
-            $curl->post($portal . '/payment/paypal/capture', $payload);
-            $status = (int) $curl->getStatus();
-            $body   = (string) $curl->getBody();
-            $data   = json_decode($body, true);
-
-            if ($status === 200 && !empty($data['success']) && !empty($data['license_key'])) {
-                return [(string) $data['license_key'], (string) ($data['plan'] ?? $plan), ''];
-            }
-            $error = is_array($data) && !empty($data['error'])
-                ? $data['error']
-                : ('PayPal capture did not complete (status ' . $status . '): ' . $body);
-            return ['', '', $error];
-        } catch (\Throwable $e) {
-            return ['', '', 'Could not reach portal: ' . $e->getMessage()];
-        }
     }
 }

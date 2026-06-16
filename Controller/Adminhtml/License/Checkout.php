@@ -12,18 +12,18 @@ use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\HTTP\Client\CurlFactory;
 
 /**
- * Starts checkout by delegating to the eTechFlow licensing portal. The portal
- * creates the payment session using ITS OWN keys (portal admin -> Settings) and
- * returns the redirect URL. No Stripe/PayPal keys live in Magento.
- *
- * The POSTed `method` selects the portal endpoint — stripe -> create-session,
- * paypal -> create-order; both take the same payload and return {"url": ...}.
+ * Starts checkout via the eTechFlow webstore Paddle broker (module.etechflow.com)
+ * — the same gateway Mega Menu uses. The broker opens a Paddle transaction on the
+ * webstore's OWN Paddle account and returns the hosted pay URL; the licensing
+ * portal still issues the SP-XXXX key once payment clears. No card keys in Magento.
  */
 class Checkout extends Action
 {
     public const ADMIN_RESOURCE = 'Etechflow_RichSnippets::config';
 
     private const MODULE_ID = 'rich-snippets';
+    private const BROKER_URL = 'https://module.etechflow.com/api/license/checkout';
+    private const LICENSE_TOKEN = 'lcsk_8f3b9d2a7c14e605b9af2e7c1d8043f6';
 
     public function __construct(
         Context $context,
@@ -38,7 +38,6 @@ class Checkout extends Action
         $plan   = trim((string) $this->getRequest()->getPost('plan', ''));
         $name   = trim((string) $this->getRequest()->getPost('name', ''));
         $email  = trim((string) $this->getRequest()->getPost('email', ''));
-        $method = strtolower(trim((string) $this->getRequest()->getPost('method', 'stripe')));
         $domain = $this->licenseValidator->getCurrentHost();
 
         $gate = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT)->setPath('etechflow_richsnippets/license/gate');
@@ -52,11 +51,6 @@ class Checkout extends Action
             return $gate;
         }
 
-        $endpoint = $method === 'paypal'
-            ? '/payment/paypal/create-order'
-            : '/payment/stripe/create-session';
-
-        $portalBase = rtrim(str_replace('/license/validate', '', $this->licenseValidator->getPortalUrl()), '/');
         $payload = json_encode([
             'plan'             => $plan,
             'name'             => $name,
@@ -69,10 +63,11 @@ class Checkout extends Action
 
         try {
             $curl = $this->curlFactory->create();
-            $curl->setTimeout(20);
+            $curl->setTimeout(25);
             $curl->addHeader('Content-Type', 'application/json');
             $curl->addHeader('Accept', 'application/json');
-            $curl->post($portalBase . $endpoint, $payload);
+            $curl->addHeader('X-ETF-License-Token', self::LICENSE_TOKEN);
+            $curl->post(self::BROKER_URL, $payload);
             $status = (int) $curl->getStatus();
             $body   = (string) $curl->getBody();
         } catch (\Throwable $e) {

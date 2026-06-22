@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="etechflow" translate="label" sortOrder="400">
+            <label>Etechflow</label>
+        </tab>
+        <section id="etechflow_richsnippets" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Rich Snippets (JSON-LD)</label>
+            <tab>etechflow</tab>
+            <resource>Etechflow_RichSnippets::config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General</label>
+                <field id="enabled" translate="label comment tooltip" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable module (master switch)</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Master switch. While OFF, the module emits no schema.</comment>
+                    <tooltip>Turns the whole rich-snippets module on or off. Keep this OFF while another SEO/snippets extension (e.g. Mirasvit) is active, so you don't output duplicate structured data.</tooltip>
+                </field>
+            </group>
+            <group id="product" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Product page</label>
+                <field id="enabled" translate="label tooltip" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable product rich snippet</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <tooltip>Adds Product structured data (price, availability, brand, reviews) to product pages so Google can show rich results.</tooltip>
+                </field>
+                <field id="variants_enabled" translate="label comment tooltip" type="select" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Emit ProductGroup for configurables</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Outputs ProductGroup + hasVariant for configurable products.</comment>
+                    <tooltip>For configurable products, lists every variant (size/colour, etc.) as a ProductGroup. Has no effect on simple products.</tooltip>
+                </field>
+                <field id="brand_attribute" translate="label comment tooltip" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Brand attribute code</label>
+                    <comment>Default: brand</comment>
+                    <tooltip>The product attribute code that holds the brand name, e.g. "brand" or "manufacturer". Leave as "brand" if unsure.</tooltip>
+                </field>
+                <field id="mpn_attribute" translate="label comment tooltip" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>MPN attribute code</label>
+                    <comment>Default: sku</comment>
+                    <tooltip>Manufacturer Part Number attribute code. Many stores simply use "sku" here.</tooltip>
+                </field>
+                <field id="gtin13_attribute" translate="label comment tooltip" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>GTIN-13 attribute code</label>
+                    <comment>Leave empty if products have no barcode.</comment>
+                    <tooltip>Attribute code holding the 13-digit barcode (EAN). Leave blank for products without a barcode, such as bespoke keys.</tooltip>
+                </field>
+                <field id="condition_attribute" translate="label comment tooltip" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Item condition attribute code</label>
+                    <comment>Optional. Values containing used/refurbished/damaged map to schema.org conditions; otherwise NewCondition.</comment>
+                    <tooltip>Optional attribute code for item condition. Values containing "used", "refurbished" or "damaged" are mapped automatically. Leave blank to always mark items as New.</tooltip>
+                </field>
+            </group>
+            <group id="category" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Category page</label>
+                <field id="enabled" translate="label tooltip" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable category rich snippet</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <tooltip>Adds an ItemList of the products shown on the current page, plus a breadcrumb, to category and filtered (landing) pages.</tooltip>
+                </field>
+            </group>
+            <group id="opengraph" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>OpenGraph &amp; Twitter</label>
+                <field id="enabled" translate="label tooltip" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable OpenGraph + Twitter meta</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <tooltip>Adds OpenGraph and Twitter Card tags so links shared on social media (Facebook, WhatsApp, X, LinkedIn) show a title, image and price.</tooltip>
+                </field>
+            </group>
+            <group id="cms" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>CMS &amp; home pages</label>
+                <field id="enabled" translate="label tooltip" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable WebPage schema (CMS + home)</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <tooltip>Adds WebPage structured data to CMS pages and the home page, linked to your Organization and WebSite.</tooltip>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

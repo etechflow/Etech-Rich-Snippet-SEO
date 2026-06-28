@@ -16,9 +16,9 @@ use Magento\Framework\HTTP\Client\CurlFactory;
 use Magento\Framework\View\Result\PageFactory;
 
 /**
- * Landing page after payment. The buyer returns from the webstore Paddle
+ * Landing page after payment. The buyer returns from the webstore Stripe
  * checkout (module.etechflow.com) carrying the broker session id; we fetch the
- * issued SP-XXXX key from the broker (only returned once Paddle confirms
+ * issued SP-XXXX key from the broker (only returned once Stripe confirms
  * payment) and save it to config. Same gateway as Mega Menu.
  */
 class Activated extends Action

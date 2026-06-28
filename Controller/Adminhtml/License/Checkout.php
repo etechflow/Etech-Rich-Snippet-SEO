@@ -12,9 +12,9 @@ use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\HTTP\Client\CurlFactory;
 
 /**
- * Starts checkout via the eTechFlow webstore Paddle broker (module.etechflow.com)
- * — the same gateway Mega Menu uses. The broker opens a Paddle transaction on the
- * webstore's OWN Paddle account and returns the hosted pay URL; the licensing
+ * Starts checkout via the eTechFlow webstore Stripe broker (module.etechflow.com)
+ * — the same gateway Mega Menu uses. The broker opens a Stripe transaction on the
+ * webstore's OWN Stripe account and returns the hosted pay URL; the licensing
  * portal still issues the SP-XXXX key once payment clears. No card keys in Magento.
  */
 class Checkout extends Action
